@@ -1,6 +1,6 @@
 ## CC0 Samples from freesound.org via sonic-pi
 
-The flac audio sample files in [../www/samples/](../www/samples) are a subset
+The flac audio sample files in [../samples/](../samples) are a subset
 of the CC0 publid domain samples from the [sonic-pi]() project, who obtained
 them from freesound.org.
 
