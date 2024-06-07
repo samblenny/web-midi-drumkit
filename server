@@ -9,4 +9,4 @@
 #
 echo 'Starting HTTP dev server (root = ./www) on localhost:8000'
 echo 'python3 -m http.server --bind 127.0.0.1  2>/dev/null >/dev/null'
-cd www; python3 -m http.server --bind 127.0.0.1  2>/dev/null >/dev/null
+python3 -m http.server --bind 127.0.0.1  2>/dev/null >/dev/null
