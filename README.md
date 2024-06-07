@@ -61,8 +61,8 @@ tapping the stop button three times in a row.
 
 The samples are CC0 (public domain) licensed by way of sonic-pi and
 freesound\.org. For details see
-[LICENCES/LICENSE_SAMPLES.md](LICENCES/LICENSE_SAMPLES.md) and
-[www/samples/README.md](www/samples/README.md).
+[LICENSES/LICENSE_SAMPLES.md](LICENSES/LICENSE_SAMPLES.md) and
+[samples/README.md](samples/README.md).
 
 The source code is MIT licensed. See
-[LICENCES/LICENSE_MIT](LICENCES/LICENSE_MIT).
+[LICENSES/LICENSE_MIT](LICENSES/LICENSE_MIT).
