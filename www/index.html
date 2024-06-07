@@ -1,0 +1,105 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8" />
+<!-- SPDX-License-Identifier: MIT -->
+<!-- SPDX-FileCopyrightText: Copyright 2024 Sam Blenny -->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>web-midi-drumkit</title>
+<style>
+ :root{--F: #ffdcec; --B: #1d1d1d; --H: #25c3c0; --L: #459cda; --O: #aaa;
+       --BTN: #32ea39; }
+ @media (prefers-color-scheme: light){
+  :root{--F: #101010; --B: #f5f5f5; --H: #313131; --L: #3f40f9; --O: #444;
+        --BTN: #32ea39; }
+ }
+ html{ background: var(--B); -webkit-text-size-adjust: none; }
+ body{ background: var(--B); color: var(--F); min-height: 100vh;
+  width: 100%; font-family: sans-serif; font-size: 17.5px; }
+ html,body,h1,h2,main{ margin: 0; padding: 0; box-sizing: border-box; }
+ p,li{ line-height: 1.23em; }
+ h1{ margin: 20px 0 15px -3px; font-size: 38px; color: var(--H); }
+ h2{ margin: 33px 0 15px -3px; font-size: 22px; color: var(--H); }
+ a{ color: var(--L); }
+ p,ul{ margin: 11px 0; }
+ main{ margin: 0 auto; padding: 2px 25px 115px 25px; max-width: 680px; }
+ #unmute{ float: right; background: var(--BTN); font-size: 24px; padding: 10px;
+  border-radius: 13px; border: 2px solid var(--H); }
+ #unmute.mute{ background: var(--B); color: var(--F); font-size: 18px; }
+ table{ border-collapse: collapse; border-spacing: 0;}
+ table,td{ border: 1px solid var(--H); }
+ td{ padding: 5px; }
+ thead td{ font-weight: bold; }
+ svg{ display: block; max-width: 100%; height: auto; margin: 40px auto 40px auto; }
+ path{ stroke-width:3px; stroke: var(--H); fill: var(--B); }
+ path{ transition: all 900ms; }
+ path.on{ fill: var(--O);}
+ .act span{ background: var(--B); color: var(--F); transition: all 900ms; }
+ .act span.on{ background: var(--F); color: var(--B); }
+</style>
+</head>
+<body>
+<main>
+<h1>web-midi-drumkit</h1>
+
+<button id="unmute">Unmute Sound</button>
+
+<p>MIDI Input: <span id="midi-in">[no connection]</span></p>
+
+<p class="act">Channel activity:
+<span id="ch01">1</span> <span id="ch02">2</span> <span id="ch03">3</span>
+<span id="ch04">4</span> <span id="ch05">5</span> <span id="ch06">6</span>
+<span id="ch07">7</span> <span id="ch08">8</span> <span id="ch09">9</span>
+<span id="ch10">10</span> <span id="ch11">11</span> <span id="ch12">12</span>
+<span id="ch13">13</span> <span id="ch14">14</span> <span id="ch15">15</span>
+<span id="ch16">16</span>
+</p>
+
+<svg version="1.1" width="640" height="480"
+ viewBox="0 0 640 480" id="svg5" xml:space="preserve"
+ xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+<path id="kick" d="m 289,346 c -3,-107 179,-118 181,-2 1,116 -178,109 -181,2 z" />
+<path id="snare" d="m 176,234 c -1,-29 133,-24 130,6 -3,29.6 -129,23 -130,-6 z" />
+<path id="tom1" d="m 199,142 c -1,-24 107,-15 102,7 -5,23 -100,17 -102,-7 z" />
+<path id="tom2" d="m 454,146 c 1,-24 -106,-23 -101,-1 5,23 100,25 101,0 z" />
+<path id="tom3" d="m 443,241 c 3,-24 114,-21 109,2 -6,23 -112,22 -109,-2 z" />
+<path id="hihat" d="m 19.8,145 c -7,-31 125,-27 129,2 4,29 -122,29 -129,-2 z" />
+<path id="crash" d="M 61,40 C 69,6 222,21 220,54 219,88 52,74 61,40 Z" />
+<path id="ride" d="M 438,71 C 431,33 584,8 596,50 608,92 446,109 438,71 Z" />
+</svg>
+
+<p>This plays a 5-piece sampled drum kit triggered by notes on MIDI channel
+10. The code [is on Github](https://github.com/samblenny/web-midi-drumkit).</p>
+
+
+<h2>Note Map</h2>
+
+<table>
+<thead>
+<tr><td>MIDI Note</td><td>Note Name</td><td>Drum Sound </td></tr>
+</thead><tbody>
+<tr><td>51</td><td>D#3</td><td>Ride Cymbal</td></tr>
+<tr><td>49</td><td>C#3</td><td>Crash Cymbal</td></tr>
+<tr><td>48</td><td>C3 </td><td>Tom 1 (high)</td></tr>
+<tr><td>46</td><td>A#2</td><td>Hi-hat (open)</td></tr>
+<tr><td>45</td><td>A2 </td><td>Tom 2 (low)</td></tr>
+<tr><td>43</td><td>G2 </td><td>Tom 3 (floor)</td></tr>
+<tr><td>42</td><td>F#2</td><td>Hi-hat (closed)</td></tr>
+<tr><td>38</td><td>D2 </td><td>Snare</td></tr>
+<tr><td>36</td><td>C2 </td><td>Kick</td></tr>
+</tbody>
+</table>
+
+
+<h2>Troubleshooting checklist:</h2>
+
+<ul>
+<li>Did you check your cables?</li>
+<li>Are you sending MIDI on channel 10?</li>
+<li>Are you sending notes in the right octave?</li>
+<li>Are you using Chrome?</li>
+</ul>
+
+
+<script type="module" src="main.js"></script>
+
+</main>
+</body>
+</html>

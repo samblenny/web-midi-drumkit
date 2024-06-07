@@ -1,0 +1,12 @@
+#!/bin/sh
+# SPDX-License-Identifier: MIT
+# SPDX-FileCopyrightText: Copyright 2024 Sam Blenny
+#
+# This starts a local-only HTTP server to serve the contents of the ./www
+# directory at http://127.0.0.1:8000/. You can use this to privately preview
+# html and javascript edits before uploading the changes to public hosting.
+# Use Ctrl-C to stop the server when you're done.
+#
+echo 'Starting HTTP dev server (root = ./www) on localhost:8000'
+echo 'python3 -m http.server --bind 127.0.0.1  2>/dev/null >/dev/null'
+cd www; python3 -m http.server --bind 127.0.0.1  2>/dev/null >/dev/null
