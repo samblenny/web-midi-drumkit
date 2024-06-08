@@ -39,6 +39,19 @@ const CHAN_ACTIVITY = [
 ];
 const CHAN_COUNT = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
 
+// Mapping of drum tags to flac sample files
+const FLAC = {
+    ride: 'samples/drum_cymbal_soft.flac',
+    crash: 'samples/drum_splash_soft.flac',
+    tom1: 'samples/drum_tom_hi_hard.flac',
+    hiOpen: 'samples/drum_cymbal_open.flac',
+    tom2: 'samples/drum_tom_mid_hard.flac',
+    tom3: 'samples/drum_tom_lo_hard.flac',
+    hiClosed: 'samples/drum_cymbal_closed.flac',
+    snare: 'samples/drum_snare_hard.flac',
+    kick: 'samples/drum_heavy_kick.flac',
+};
+
 // Drum sample AudioBufferSourceNodes for active samples
 const PLAYERS = {
     kick: null,
@@ -61,13 +74,23 @@ const AUDIO = {
     warningCounter: 0,
 };
 
+// Preload .flac files for drum samples and convert them to AudioBuffers
+function fetchFlacSamples() {
+    for (let tag in FLAC) {
+        fetch(FLAC[tag]).then((response) => {
+            response.arrayBuffer().then((buf) => {
+                AUDIO[tag] = buf;
+            });
+        });
+    }
+}
+
 // Set up audio (this must be called from a user interaction event handler)
 function initAudioSystem() {
     AUDIO.ctx = new (window.AudioContext || window.webkitAudioContext)();
     AUDIO.ctx.resume().then(() => {
         MUTE_BTN.classList.add('mute');
         MUTE_BTN.textContent = 'mute';
-        console.log('audio playback enabled');
     });
 }
 
@@ -82,7 +105,6 @@ MUTE_BTN.addEventListener('click', function() {
             MUTE_BTN.classList.remove('mute');
             MUTE_BTN.textContent = 'Unmute Sound';
             AUDIO.ctx = null;
-            console.log('audio playback suspended');
         });
     } else {
         // Audio was muted, so initialize an context to enable playing audio
@@ -99,8 +121,8 @@ function stopSample(tag) {
 }
 
 // Play a sound given the tag for a drum sample buffer.
-function fetchAndPlay(path, tag) {
-    if(AUDIO.ctx === null) {
+function triggerFlac(tag) {
+    if(!AUDIO.ctx) {
         // Audio is muted, so we can't play sounds right now
         if(AUDIO.warningCounter < 1) {
             console.log("To play sound, you need to click the unmute button");
@@ -108,20 +130,26 @@ function fetchAndPlay(path, tag) {
         }
         return
     }
-    // Audio is unmuted, so play the sample
-    fetch(path).then((response) => {
-        response.arrayBuffer().then((buf) => {
-            AUDIO.ctx.decodeAudioData(buf, (b) => {
-                const s = AUDIO.ctx.createBufferSource();
-                s.buffer = b;
-                s.connect(AUDIO.ctx.destination);
-                s.start();
-                // Retrigger if needed, then save the AudioBufferSourceNode
-                stopSample(tag);
-                PLAYERS[tag] = s;
-            });
+    // Audio is unmuted, so play the sample. Note that decodeAudioData() will
+    // take ownership of ("detach") its ArrayBuffer argument, preventing it
+    // from being reused. So, to avoid the latency of having to fetch the .flac
+    // file again, copy the buffer first with slice(), then decode the copy.
+    // See https://github.com/WebAudio/web-audio-api/issues/1175
+    if(AUDIO[tag]) {
+        const buf = (AUDIO[tag]).slice();
+        AUDIO.ctx.decodeAudioData(buf, (b) => {
+            const s = AUDIO.ctx.createBufferSource();
+            s.buffer = b;
+            s.connect(AUDIO.ctx.destination);
+            s.start();
+            // Retrigger if needed, then save the AudioBufferSourceNode
+            stopSample(tag);
+            PLAYERS[tag] = s;
         });
-    });
+    } else {
+        // This might happen on slow network connections
+        console.log('hmm... unexpectedly, sample data is not loaded for', tag);
+    }
 }
 
 function setStatus(midiInputNames) {
@@ -136,40 +164,40 @@ function setStatus(midiInputNames) {
 function noteOn(note, velocity) {
     switch(note) {
     case 51:  // D#3 ride cymbal
-        fetchAndPlay("samples/drum_cymbal_soft.flac", 'ride');
+        triggerFlac('ride');
         RIDE.add("on");
         break;
     case 49:  // C#3 crash cymbal
         // not a real crash... /shrug
-        fetchAndPlay("samples/drum_splash_soft.flac", 'crash');
+        triggerFlac('crash');
         CRASH.add("on");
         break;
     case 48:  // C3 tom1 (high)
-        fetchAndPlay("samples/drum_tom_hi_hard.flac", 'tom1');
+        triggerFlac('tom1');
         TOM1.add("on");
         break;
     case 46:  // A#2 hi-hat open
-        fetchAndPlay("samples/drum_cymbal_open.flac", 'hiOpen');
+        triggerFlac('hiOpen');
         HIHAT.add("on");
         break;
     case 45:  // A2 tom2 (low)
-        fetchAndPlay("samples/drum_tom_mid_hard.flac", 'tom2');
+        triggerFlac('tom2');
         TOM2.add("on");
         break;
     case 43:  // G2 tom3 (floor)
-        fetchAndPlay("samples/drum_tom_lo_hard.flac", 'tom3');
+        triggerFlac('tom3');
         TOM3.add("on");
         break;
     case 42:  // F#2 hi-hat closed
-        fetchAndPlay("samples/drum_cymbal_closed.flac", 'hiClosed');
+        triggerFlac('hiClosed');
         HIHAT.add("on");
         break;
     case 38:  // D2 snare
-        fetchAndPlay("samples/drum_snare_hard.flac", 'snare');
+        triggerFlac('snare');
         SNARE.add("on");
         break;
     case 36:  // C2 kick
-        fetchAndPlay("samples/drum_heavy_kick.flac", 'kick');
+        triggerFlac('kick');
         KICK.add("on");
         break;
     }
@@ -317,3 +345,6 @@ function midiFail(obj) {
 // Start the process of getting access to MIDI devices.
 // This should trigger a browser permission authorization dialog box.
 navigator.requestMIDIAccess().then(midiOK, midiFail);
+
+// Load FLAC sample files
+fetchFlacSamples();
