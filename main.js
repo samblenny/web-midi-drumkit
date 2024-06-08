@@ -90,11 +90,19 @@ function fetchFlacSamples() {
 
 // Set up audio (this must be called from a user interaction event handler)
 function initAudioSystem() {
-    AUDIO.ctx = new (window.AudioContext || window.webkitAudioContext)();
-    AUDIO.ctx.resume().then(() => {
-        MUTE_BTN.classList.add('mute');
-        MUTE_BTN.textContent = 'mute';
-    });
+    const context = window.AudioContext || window.webkitAudioContext;
+    if(!context) {
+        console.log("AudioContext not available (Lockdown Mode enabled?)");
+        alert("The WebAudio API is disabled, so I can't play sounds. For iOS "
+            + "with Lockdown Mode enabled, you could try disabling Lockdown "
+            + "Mode for this page (\"AA\" menu in URL bar).");
+    } else {
+        AUDIO.ctx = new context();
+        AUDIO.ctx.resume().then(() => {
+            MUTE_BTN.classList.add('mute');
+            MUTE_BTN.textContent = 'mute';
+        });
+    }
 }
 
 // Add audio playback enable function to the play button
@@ -393,7 +401,13 @@ function midiFail(obj) {
 
 // Start the process of getting access to MIDI devices.
 // This should trigger a browser permission authorization dialog box.
-navigator.requestMIDIAccess().then(midiOK, midiFail);
+try {
+    navigator.requestMIDIAccess().then(midiOK, midiFail);
+}
+catch(e) {
+    console.log("This browser does not support WebMIDI API, so no MIDI input");
+    MIDI_IN.textContent = "[MIDI input not supported by this browser]";
+}
 
 // Load FLAC sample files
 fetchFlacSamples();
