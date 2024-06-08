@@ -58,6 +58,7 @@ const PLAYERS = {
 const AUDIO = {
     ctx: null, kick: null, snare: null, tom1: null, tom2: null, tom3: null,
     hiOpen: null, hiClosed: null, crash: null, ride: null,
+    warningCounter: 0,
 };
 
 // Set up audio (this must be called from a user interaction event handler)
@@ -97,10 +98,17 @@ function stopSample(tag) {
     }
 }
 
+// Play a sound given the tag for a drum sample buffer.
 function fetchAndPlay(path, tag) {
-    // Play a sound given the path to its flac file. This is probably pretty
-    // inefficient, but I'd need to spend a good deal more time studying the
-    // WebAudio API docs to come up with anything better.
+    if(AUDIO.ctx === null) {
+        // Audio is muted, so we can't play sounds right now
+        if(AUDIO.warningCounter < 1) {
+            console.log("To play sound, you need to click the unmute button");
+            AUDIO.warningCounter += 1;
+        }
+        return
+    }
+    // Audio is unmuted, so play the sample
     fetch(path).then((response) => {
         response.arrayBuffer().then((buf) => {
             AUDIO.ctx.decodeAudioData(buf, (b) => {
