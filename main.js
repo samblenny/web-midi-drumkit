@@ -52,26 +52,40 @@ const PLAYERS = {
     crash: null,
 };
 
-// Set up Audio (this won't actually be usable until a user interaction event
-// enables audio playback)
-const CTX = new (window.AudioContext || window.webkitAudioContext)();
+// Audio context needs to be enabled in a handler for a user interaction event,
+// so for now, just use null to indicate that audio isn't ready yet. Use the
+// same approach for drum hit sample buffers.
+const AUDIO = {
+    ctx: null, kick: null, snare: null, tom1: null, tom2: null, tom3: null,
+    hiOpen: null, hiClosed: null, crash: null, ride: null,
+};
+
+// Set up audio (this must be called from a user interaction event handler)
+function initAudioSystem() {
+    AUDIO.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    AUDIO.ctx.resume().then(() => {
+        MUTE_BTN.classList.add('mute');
+        MUTE_BTN.textContent = 'mute';
+        console.log('audio playback enabled');
+    });
+}
 
 // Add audio playback enable function to the play button
 MUTE_BTN.addEventListener('click', function() {
     if(MUTE_BTN.classList.contains('mute')) {
-        // Was unmuted, so mute audio context
-        CTX.suspend().then(() => {
+        // Audio was active, so mute audio and release the old audio context
+        // to be garbage collected. This makes sure that drum samples currently
+        // playing will just stop rather than resuming when audio gets unmuted
+        // again later.
+        AUDIO.ctx.suspend().then(() => {
             MUTE_BTN.classList.remove('mute');
             MUTE_BTN.textContent = 'Unmute Sound';
+            AUDIO.ctx = null;
             console.log('audio playback suspended');
         });
     } else {
-        // Was muted, so unmute audio context
-        CTX.resume().then(() => {
-            MUTE_BTN.classList.add('mute');
-            MUTE_BTN.textContent = 'mute';
-            console.log('audio playback enabled');
-        });
+        // Audio was muted, so initialize an context to enable playing audio
+        initAudioSystem();
     }
 });
 
@@ -89,10 +103,10 @@ function fetchAndPlay(path, tag) {
     // WebAudio API docs to come up with anything better.
     fetch(path).then((response) => {
         response.arrayBuffer().then((buf) => {
-            CTX.decodeAudioData(buf, (b) => {
-                const s = CTX.createBufferSource();
+            AUDIO.ctx.decodeAudioData(buf, (b) => {
+                const s = AUDIO.ctx.createBufferSource();
                 s.buffer = b;
-                s.connect(CTX.destination);
+                s.connect(AUDIO.ctx.destination);
                 s.start();
                 // Retrigger if needed, then save the AudioBufferSourceNode
                 stopSample(tag);
