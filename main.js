@@ -9,14 +9,16 @@ const MIDI_IN = document.querySelector('#midi-in');
 const MUTE_BTN = document.querySelector('#unmute');
 
 // Drum pad SVG elements
-const KICK = document.querySelector('#kick').classList;
-const SNARE = document.querySelector('#snare').classList;
-const TOM1 = document.querySelector('#tom1').classList;
-const TOM2 = document.querySelector('#tom2').classList;
-const TOM3 = document.querySelector('#tom3').classList;
-const HIHAT = document.querySelector('#hihat').classList;
-const CRASH = document.querySelector('#crash').classList;
-const RIDE = document.querySelector('#ride').classList;
+const SVG = {
+    kick: document.querySelector('#kick').classList,
+    snare: document.querySelector('#snare').classList,
+    tom1: document.querySelector('#tom1').classList,
+    tom2: document.querySelector('#tom2').classList,
+    tom3: document.querySelector('#tom3').classList,
+    hihat: document.querySelector('#hihat').classList,
+    crash: document.querySelector('#crash').classList,
+    ride: document.querySelector('#ride').classList,
+};
 
 // Channel activity indicators
 const CHAN_ACTIVITY = [
@@ -40,6 +42,7 @@ const CHAN_ACTIVITY = [
 const CHAN_COUNT = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
 
 // Mapping of drum tags to flac sample files
+// If you want to change the samples, edit these paths.
 const FLAC = {
     ride: 'samples/drum_cymbal_soft.flac',
     crash: 'samples/drum_splash_soft.flac',
@@ -152,8 +155,8 @@ function triggerFlac(tag) {
     }
 }
 
+// Update the <span id="midi-in">...</span> with list of MIDI input names
 function setStatus(midiInputNames) {
-    // Update the <span id="midi-in">...</span> with list of MIDI input names
     if(midiInputNames.length > 0) {
         MIDI_IN.textContent = midiInputNames.join(", ");
     } else {
@@ -161,84 +164,91 @@ function setStatus(midiInputNames) {
     }
 }
 
+// Handle MIDI note-on message
 function noteOn(note, velocity) {
     switch(note) {
     case 51:  // D#3 ride cymbal
         triggerFlac('ride');
-        RIDE.add("on");
+        SVG.ride.add("on");
         break;
     case 49:  // C#3 crash cymbal
         // not a real crash... /shrug
         triggerFlac('crash');
-        CRASH.add("on");
+        SVG.crash.add("on");
         break;
     case 48:  // C3 tom1 (high)
         triggerFlac('tom1');
-        TOM1.add("on");
+        SVG.tom1.add("on");
         break;
     case 46:  // A#2 hi-hat open
         triggerFlac('hiOpen');
-        HIHAT.add("on");
+        SVG.hihat.add("on");
         break;
     case 45:  // A2 tom2 (low)
         triggerFlac('tom2');
-        TOM2.add("on");
+        SVG.tom2.add("on");
         break;
     case 43:  // G2 tom3 (floor)
         triggerFlac('tom3');
-        TOM3.add("on");
+        SVG.tom3.add("on");
         break;
     case 42:  // F#2 hi-hat closed
         triggerFlac('hiClosed');
-        HIHAT.add("on");
+        SVG.hihat.add("on");
         break;
     case 38:  // D2 snare
         triggerFlac('snare');
-        SNARE.add("on");
+        SVG.snare.add("on");
         break;
     case 36:  // C2 kick
         triggerFlac('kick');
-        KICK.add("on");
+        SVG.kick.add("on");
         break;
     }
 }
 
+// Handle MIDI note-off message
 function noteOff(note) {
     switch(note) {
     case 51:  // D#3 ride cymbal
-        RIDE.remove("on");
+        SVG.ride.remove("on");
         break;
     case 49:  // C#3 crash cymbal
-        CRASH.remove("on");
+        SVG.crash.remove("on");
         break;
     case 48:  // C3 tom1 (high)
-        TOM1.remove("on");
+        SVG.tom1.remove("on");
         break;
     case 46:  // A#2 hi-hat open
-        HIHAT.remove("on");
+        SVG.hihat.remove("on");
         break;
     case 45:  // A2 tom2 (low)
-        TOM2.remove("on");
+        SVG.tom2.remove("on");
         break;
     case 43:  // G2 tom3 (floor)
-        TOM3.remove("on");
+        SVG.tom3.remove("on");
         break;
     case 42:  // F#2 hi-hat closed
-        HIHAT.remove("on");
+        SVG.hihat.remove("on");
         break;
     case 38:  // D2 snare
-        SNARE.remove("on");
+        SVG.snare.remove("on");
         break;
     case 36:  // C2 kick
-        KICK.remove("on");
+        SVG.kick.remove("on");
         break;
     }
 }
 
+// Handle MIDI CC 123 all-off / panic message
 function allOffPanic() {
+    // Stop sounds
+    for (const tag in PLAYERS) {
+        stopSample(tag)
+    }
     // Clear drum pads
-    for (const note in [51, 49, 48, 46, 45, 43, 42, 38, 36]) {
-        noteOff(note);
+    for (const tag in SVG) {
+        SVG[tag].remove('on');
     }
     // Clear channel activity indicators
     for (let i = 0; i < 16; i++) {
@@ -247,8 +257,8 @@ function allOffPanic() {
     }
 }
 
+// Handle MIDI CC messages
 function cc(control, data) {
-    // Handle CC messages
     switch(control) {
     case 123:  // All-Off / Panic (triple-tap stop button on Arturia KeyStep)
         allOffPanic();
@@ -258,6 +268,7 @@ function cc(control, data) {
 
 function max(a, b) { return (a > b) ? a : b; }
 
+// Update MIDI channel activity UI indicators
 function channelActivity(chan, on) {
     if(chan < 0 || chan > 15) {
         log.error("channel out of range", chan);
@@ -277,8 +288,8 @@ function channelActivity(chan, on) {
     }
 }
 
+// Respond to an incoming MIDI message (an array of raw MIDI bytes)
 function midiMsg(msg) {
-    // Respond to an incoming MIDI message (an array of raw MIDI bytes)
     if(msg.data.length !== 3) {
         return;
     }
@@ -314,13 +325,13 @@ function midiMsg(msg) {
     }
 }
 
+// When MIDI connections change, update the list of MIDI input devices
 function stateChange(midiConnectionEvent) {
-    // When MIDI connections change, update the list of MIDI input devices
     updateInputs(midiConnectionEvent.currentTarget);
 }
 
+// Start listening to all the MIDI inputs and make a list of their names
 function updateInputs(midiAccess) {
-    // Start listening to all the MIDI inputs and make a list of their names
     const names = [];
     midiAccess.inputs.forEach((i) => {
         i.onmidimessage = midiMsg;
@@ -330,15 +341,15 @@ function updateInputs(midiAccess) {
     setStatus(names);
 }
 
+// MIDI access granted, so now prepare to set up input devices and watch
+// for MIDI device hotplug events.
 function midiOK(midiAccess) {
-    // MIDI access granted, so now prepare to set up input devices and watch
-    // for MIDI device hotplug events.
     updateInputs(midiAccess);
     midiAccess.onstatechange = stateChange;
 }
 
+// MIDI access permission was denied, or perhaps some other problem
 function midiFail(obj) {
-    // MIDI access permission was denied, or perhaps some other problem
     console.error("midiFail", obj);
 }
 
