@@ -10,14 +10,14 @@ const MUTE_BTN = document.querySelector('#unmute');
 
 // Drum pad SVG elements
 const SVG = {
-    kick: document.querySelector('#kick').classList,
-    snare: document.querySelector('#snare').classList,
-    tom1: document.querySelector('#tom1').classList,
-    tom2: document.querySelector('#tom2').classList,
-    tom3: document.querySelector('#tom3').classList,
-    hihat: document.querySelector('#hihat').classList,
-    crash: document.querySelector('#crash').classList,
-    ride: document.querySelector('#ride').classList,
+    kick: document.querySelector('#kick'),
+    snare: document.querySelector('#snare'),
+    tom1: document.querySelector('#tom1'),
+    tom2: document.querySelector('#tom2'),
+    tom3: document.querySelector('#tom3'),
+    hihat: document.querySelector('#hihat'),
+    crash: document.querySelector('#crash'),
+    ride: document.querySelector('#ride'),
 };
 
 // Channel activity indicators
@@ -164,45 +164,83 @@ function setStatus(midiInputNames) {
     }
 }
 
+// Add event handlers to trigger drums by clicking on SVG drum pad paths
+function configureMouseEvents() {
+    const noteMap = {
+        kick: 36,
+        snare: 38,
+        tom1: 48,
+        tom2: 45,
+        tom3: 43,
+        hihat: 42, // closed hi-hat
+        crash: 49,
+        ride: 51,
+    }
+    // Add mouse event to note-trigger event translators
+    for (const tag in noteMap) {
+        const note = noteMap[tag];
+        SVG[tag].onmouseenter = (e) => {  // drag into path with left-button
+            if(e.buttons == 1) {
+                noteOn(note);
+                e.preventDefault();
+            }
+        };
+        SVG[tag].onmouseleave = (e) => {  // drag out of path with left-button
+            if(e.buttons == 1) {
+                noteOff(note);
+                e.preventDefault();
+            }
+        };
+        SVG[tag].onmousedown = (e) => {   // click while inside path
+            noteOn(note);
+            e.preventDefault();
+        };
+        SVG[tag].onmouseup = (e) => {     // release button while inside path
+            noteOff(note);
+            e.preventDefault();
+        };
+    }
+}
+
 // Handle MIDI note-on message
-function noteOn(note, velocity) {
+function noteOn(note) {
     switch(note) {
     case 51:  // D#3 ride cymbal
         triggerFlac('ride');
-        SVG.ride.add("on");
+        SVG.ride.classList.add("on");
         break;
     case 49:  // C#3 crash cymbal
         // not a real crash... /shrug
         triggerFlac('crash');
-        SVG.crash.add("on");
+        SVG.crash.classList.add("on");
         break;
     case 48:  // C3 tom1 (high)
         triggerFlac('tom1');
-        SVG.tom1.add("on");
+        SVG.tom1.classList.add("on");
         break;
     case 46:  // A#2 hi-hat open
         triggerFlac('hiOpen');
-        SVG.hihat.add("on");
+        SVG.hihat.classList.add("on");
         break;
     case 45:  // A2 tom2 (low)
         triggerFlac('tom2');
-        SVG.tom2.add("on");
+        SVG.tom2.classList.add("on");
         break;
     case 43:  // G2 tom3 (floor)
         triggerFlac('tom3');
-        SVG.tom3.add("on");
+        SVG.tom3.classList.add("on");
         break;
     case 42:  // F#2 hi-hat closed
         triggerFlac('hiClosed');
-        SVG.hihat.add("on");
+        SVG.hihat.classList.add("on");
         break;
     case 38:  // D2 snare
         triggerFlac('snare');
-        SVG.snare.add("on");
+        SVG.snare.classList.add("on");
         break;
     case 36:  // C2 kick
         triggerFlac('kick');
-        SVG.kick.add("on");
+        SVG.kick.classList.add("on");
         break;
     }
 }
@@ -211,31 +249,31 @@ function noteOn(note, velocity) {
 function noteOff(note) {
     switch(note) {
     case 51:  // D#3 ride cymbal
-        SVG.ride.remove("on");
+        SVG.ride.classList.remove("on");
         break;
     case 49:  // C#3 crash cymbal
-        SVG.crash.remove("on");
+        SVG.crash.classList.remove("on");
         break;
     case 48:  // C3 tom1 (high)
-        SVG.tom1.remove("on");
+        SVG.tom1.classList.remove("on");
         break;
     case 46:  // A#2 hi-hat open
-        SVG.hihat.remove("on");
+        SVG.hihat.classList.remove("on");
         break;
     case 45:  // A2 tom2 (low)
-        SVG.tom2.remove("on");
+        SVG.tom2.classList.remove("on");
         break;
     case 43:  // G2 tom3 (floor)
-        SVG.tom3.remove("on");
+        SVG.tom3.classList.remove("on");
         break;
     case 42:  // F#2 hi-hat closed
-        SVG.hihat.remove("on");
+        SVG.hihat.classList.remove("on");
         break;
     case 38:  // D2 snare
-        SVG.snare.remove("on");
+        SVG.snare.classList.remove("on");
         break;
     case 36:  // C2 kick
-        SVG.kick.remove("on");
+        SVG.kick.classList.remove("on");
         break;
     }
 }
@@ -248,7 +286,7 @@ function allOffPanic() {
     }
     // Clear drum pads
     for (const tag in SVG) {
-        SVG[tag].remove('on');
+        SVG[tag].classList.remove('on');
     }
     // Clear channel activity indicators
     for (let i = 0; i < 16; i++) {
@@ -307,7 +345,7 @@ function midiMsg(msg) {
         if(data2 == 0) {
             noteOff(data1);  // remap on @ velocity 0 to note-off
         } else {
-            noteOn(data1, data2);
+            noteOn(data1);   // ignore velocity (data2)
         }
         break;
     case 0xb9:               // CC | channel 10
@@ -359,3 +397,6 @@ navigator.requestMIDIAccess().then(midiOK, midiFail);
 
 // Load FLAC sample files
 fetchFlacSamples();
+
+// Attach mouse event handlers
+configureMouseEvents();
