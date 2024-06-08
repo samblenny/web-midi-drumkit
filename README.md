@@ -4,9 +4,7 @@
 
 A sampled MIDI drumkit synth in the form of a single-page website.
 
-[**CAUTION: this works, but it's very beta (latency is high-ish)**]
-
-You can try demo at:
+You can try the demo at:
 [samblenny.github.io/web-midi-drumkit/](https://samblenny.github.io/web-midi-drumkit/)
 
 This repository has source code for a web page that uses WebMIDI to listen on
